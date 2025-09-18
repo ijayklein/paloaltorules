@@ -1119,7 +1119,8 @@ class PlanningValidationApp {
             if (phase.designParameters) {
                 reportContent += `### Design Parameters:\n`;
                 Object.entries(phase.designParameters).forEach(([key, value]) => {
-                    reportContent += `• **${key}:** ${value}\n`;
+                    let formattedValue = this.formatParameterValue(key, value);
+                    reportContent += `• **${this.formatParameterName(key)}:** ${formattedValue}\n`;
                 });
                 reportContent += `\n`;
             }
@@ -1172,6 +1173,13 @@ class PlanningValidationApp {
                     reportContent += `${icon} **${result.rule}**${severity}\n`;
                     reportContent += `   Status: ${result.status}\n`;
                     reportContent += `   Message: ${result.message}\n`;
+
+                    if (result.actual !== undefined) {
+                        reportContent += `   Actual: ${this.formatValidationValue(result.actual)}\n`;
+                    }
+                    if (result.required !== undefined) {
+                        reportContent += `   Required: ${this.formatValidationValue(result.required)}\n`;
+                    }
 
                     if (result.status === 'FAIL' && result.remediation) {
                         reportContent += `   **Remediation:** ${result.remediation}\n`;
@@ -1288,6 +1296,141 @@ class PlanningValidationApp {
     ${html}
 </body>
 </html>`;
+    }
+
+    // Report formatting helper methods
+    formatParameterName(key) {
+        const nameMap = {
+            'maxHeight': 'Maximum Building Height',
+            'maxFloorArea': 'Maximum Floor Area',
+            'setbacks': 'Required Setbacks',
+            'farBreakdown': 'Floor Area Ratio Breakdown',
+            'buildingEnvelope': 'Building Envelope',
+            'parkingRequirements': 'Parking Requirements',
+            'accessRequirements': 'Access Requirements',
+            'secondUnitEligible': 'Second Unit Eligibility',
+            'poolAllowed': 'Pool Allowed',
+            'maxLotCoverage': 'Maximum Lot Coverage'
+        };
+        return nameMap[key] || key;
+    }
+
+    formatParameterValue(key, value) {
+        if (value === null || value === undefined) {
+            return 'N/A';
+        }
+
+        if (typeof value === 'object') {
+            if (key === 'setbacks') {
+                return this.formatSetbacks(value);
+            } else if (key === 'farBreakdown') {
+                return this.formatFarBreakdown(value);
+            } else if (key === 'buildingEnvelope') {
+                return this.formatBuildingEnvelope(value);
+            } else if (key === 'parkingRequirements') {
+                return this.formatParkingRequirements(value);
+            } else {
+                // Generic object formatting
+                return Object.entries(value)
+                    .map(([k, v]) => `${k}: ${v}`)
+                    .join(', ');
+            }
+        }
+
+        if (typeof value === 'number') {
+            if (key.includes('Height') || key.includes('height')) {
+                return `${value} feet`;
+            } else if (key.includes('Area') || key.includes('area') || key.includes('Size') || key.includes('size')) {
+                return `${value.toLocaleString()} sq ft`;
+            } else if (key.includes('Coverage') || key.includes('coverage')) {
+                return `${value.toLocaleString()} sq ft`;
+            } else {
+                return value.toLocaleString();
+            }
+        }
+
+        if (typeof value === 'boolean') {
+            return value ? 'Yes' : 'No';
+        }
+
+        return value.toString();
+    }
+
+    formatSetbacks(setbacks) {
+        if (!setbacks || typeof setbacks !== 'object') return 'N/A';
+
+        const parts = [];
+        if (setbacks.front) parts.push(`Front: ${setbacks.front} ft`);
+        if (setbacks.interiorSide) parts.push(`Interior Side: ${setbacks.interiorSide} ft`);
+        if (setbacks.streetSide) parts.push(`Street Side: ${setbacks.streetSide} ft`);
+        if (setbacks.rear) parts.push(`Rear: ${setbacks.rear} ft`);
+
+        if (setbacks.specialConditions && setbacks.specialConditions.length > 0) {
+            parts.push(`Special: ${setbacks.specialConditions.join(', ')}`);
+        }
+
+        return parts.length > 0 ? parts.join(' | ') : 'Standard setbacks apply';
+    }
+
+    formatFarBreakdown(farData) {
+        if (!farData || typeof farData !== 'object') return 'N/A';
+
+        const parts = [];
+        if (farData.maxFloorArea) parts.push(`Maximum Floor Area: ${farData.maxFloorArea.toLocaleString()} sq ft`);
+        if (farData.first5000Allowance) parts.push(`First 5000 sf @ 45%: ${Math.round(farData.first5000Allowance).toLocaleString()} sq ft`);
+        if (farData.excessAllowance) parts.push(`Excess @ 30%: ${Math.round(farData.excessAllowance).toLocaleString()} sq ft`);
+        if (farData.calculatedFAR) parts.push(`Total Calculated: ${Math.round(farData.calculatedFAR).toLocaleString()} sq ft`);
+
+        return parts.length > 0 ? parts.join(' | ') : 'Standard FAR applies';
+    }
+
+    formatBuildingEnvelope(envelope) {
+        if (!envelope || typeof envelope !== 'object') return 'N/A';
+
+        const parts = [];
+
+        if (envelope.daylightPlane) {
+            const dp = envelope.daylightPlane;
+            parts.push(`Daylight Plane: ${dp.angle}° from ${dp.measurementHeight} ft height`);
+        }
+
+        if (envelope.architecturalFeatures) {
+            const features = [];
+            const af = envelope.architecturalFeatures;
+            if (af.porches) features.push(`Porches: ${af.porches.maxSize} ${af.porches.unit}`);
+            if (af.entryProjections) features.push(`Entry projections: ${af.entryProjections.maxProjection} ${af.entryProjections.unit}`);
+            if (af.bayWindows) features.push(`Bay windows: ${af.bayWindows.maxProjection} ft projection, ${af.bayWindows.maxWidth} ft width max`);
+            if (features.length > 0) {
+                parts.push(`Architectural Features: ${features.join(', ')}`);
+            }
+        }
+
+        return parts.length > 0 ? parts.join(' | ') : 'Standard building envelope applies';
+    }
+
+    formatParkingRequirements(parking) {
+        if (!parking || typeof parking !== 'object') return 'N/A';
+
+        const parts = [];
+        if (parking.required) parts.push(`Required: ${parking.required} spaces`);
+        if (parking.covered) parts.push(`Covered: ${parking.covered} spaces`);
+        if (parking.uncovered) parts.push(`Uncovered: ${parking.uncovered} spaces`);
+
+        return parts.length > 0 ? parts.join(', ') : 'Standard parking applies';
+    }
+
+    formatValidationValue(value) {
+        if (value === null || value === undefined) return 'N/A';
+        if (typeof value === 'number') {
+            return value.toLocaleString();
+        }
+        if (typeof value === 'boolean') {
+            return value ? 'Yes' : 'No';
+        }
+        if (typeof value === 'object') {
+            return JSON.stringify(value, null, 2);
+        }
+        return value.toString();
     }
 
     // Utility methods
