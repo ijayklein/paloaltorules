@@ -1499,11 +1499,21 @@ class PlanningValidationApp {
         if (!parking || typeof parking !== 'object') return 'N/A';
 
         const parts = [];
-        if (parking.required) parts.push(`Required: ${parking.required} spaces`);
-        if (parking.covered) parts.push(`Covered: ${parking.covered} spaces`);
-        if (parking.uncovered) parts.push(`Uncovered: ${parking.uncovered} spaces`);
 
-        return parts.length > 0 ? parts.join(', ') : 'Standard parking applies';
+        if (parking.totalRequired) parts.push(`Total Required: ${parking.totalRequired} spaces`);
+        if (parking.coveredRequired) parts.push(`Covered Required: ${parking.coveredRequired} spaces`);
+
+        if (parking.mainDwelling) {
+            const main = parking.mainDwelling;
+            parts.push(`Main Dwelling: ${main.total} total (${main.covered} covered)`);
+        }
+
+        if (parking.secondUnit) {
+            const second = parking.secondUnit;
+            parts.push(`Second Unit: ${second.total} total (${second.covered} covered)`);
+        }
+
+        return parts.length > 0 ? parts.join(' | ') : 'Standard parking applies';
     }
 
     formatValidationValue(value) {
@@ -1531,68 +1541,103 @@ class PlanningValidationApp {
     formatDrivewayRequirements(driveway) {
         if (!driveway) return 'Standard driveway requirements';
         const parts = [];
-        if (driveway.surfaceWidth) parts.push(`Surface Width: ${driveway.surfaceWidth} ft`);
-        if (driveway.clearanceWidth) parts.push(`Clearance Width: ${driveway.clearanceWidth} ft`);
-        if (driveway.backingDistance) parts.push(`Backing Distance: ${driveway.backingDistance} ft`);
+
+        if (driveway.minSurfaceWidth) parts.push(`Min Surface Width: ${driveway.minSurfaceWidth} ft`);
+        if (driveway.minClearanceWidth) parts.push(`Min Clearance Width: ${driveway.minClearanceWidth} ft`);
+        if (driveway.minBackingDistance) parts.push(`Min Backing Distance: ${driveway.minBackingDistance} ft`);
+        if (driveway.approvedMaterials) parts.push(`Approved Materials: ${driveway.approvedMaterials.join(', ')}`);
+
         return parts.length > 0 ? parts.join(' | ') : 'Standard driveway requirements';
     }
 
     formatGarageRequirements(garage) {
         if (!garage) return 'Standard garage requirements';
         const parts = [];
-        if (garage.setbackFromStreet) parts.push(`Street Setback: ${garage.setbackFromStreet} ft`);
-        if (garage.minDimensions) parts.push(`Min Dimensions: ${garage.minDimensions}`);
-        if (garage.doorOrientation) parts.push(`Door Orientation: ${garage.doorOrientation}`);
+
+        if (garage.frontSetback) parts.push(`Front Setback: ${garage.frontSetback} ft from front property line`);
+        if (garage.streetSideSetback) parts.push(`Street Side Setback: ${garage.streetSideSetback} ft`);
+        if (garage.specialConditions && garage.specialConditions.length > 0) {
+            parts.push(`Special Conditions: ${garage.specialConditions.join(', ')}`);
+        }
+
         return parts.length > 0 ? parts.join(' | ') : 'Standard garage requirements';
     }
 
     formatAccessRequirements(access) {
         if (!access) return 'Standard access requirements';
         const parts = [];
-        if (access.backingDistance) parts.push(`Backing Distance: ${access.backingDistance} ft`);
-        if (access.turnRadius) parts.push(`Turn Radius: ${access.turnRadius} ft`);
-        if (access.clearanceRequirements) parts.push(`Clearance: ${access.clearanceRequirements}`);
+
+        if (access.minBackingDistance) parts.push(`Min Backing Distance: ${access.minBackingDistance} ft from sidewalk`);
+        if (access.turningRadius) parts.push(`Turning Radius: ${access.turningRadius}`);
+        if (access.transportationApproval) parts.push(`Transportation Approval: ${access.transportationApproval}`);
+
         return parts.length > 0 ? parts.join(' | ') : 'Standard access requirements';
     }
 
     // Phase 4 formatting methods
     formatSecondUnitAssessment(assessment) {
         if (!assessment) return 'Second unit not assessed';
+
         const parts = [];
-        if (assessment.eligible !== undefined) parts.push(`Eligible: ${assessment.eligible ? 'Yes' : 'No'}`);
-        if (assessment.maxSize) parts.push(`Max Size: ${assessment.maxSize.toLocaleString()} sq ft`);
-        if (assessment.parkingRequired) parts.push(`Additional Parking: ${assessment.parkingRequired ? 'Required' : 'Not required'}`);
-        if (assessment.restrictions && assessment.restrictions.length > 0) {
-            parts.push(`Restrictions: ${assessment.restrictions.join(', ')}`);
+
+        // Status
+        if (assessment.status) {
+            const status = assessment.status === 'feasible' ? 'FEASIBLE' : 'NOT FEASIBLE';
+            parts.push(`Status: ${status}`);
         }
+
+        // Message with lot size details
+        if (assessment.message) {
+            parts.push(`Assessment: ${assessment.message}`);
+        }
+
+        // Parameters if feasible
+        if (assessment.parameters) {
+            const params = assessment.parameters;
+            if (params.maxSize) parts.push(`Maximum Size: ${params.maxSize.toLocaleString()} sq ft`);
+            if (params.maxSizePercent) parts.push(`Or ${params.maxSizePercent}% of main dwelling`);
+            if (params.parkingRequired) parts.push(`Additional Parking: ${params.parkingRequired} spaces required`);
+            if (params.coveredRequired) parts.push(`Covered Parking: ${params.coveredRequired} space required`);
+        }
+
         return parts.length > 0 ? parts.join(' | ') : 'Assessment pending';
     }
 
     formatAccessoryStructures(structures) {
         if (!structures) return 'Standard accessory structure rules';
         const parts = [];
+
         if (structures.maxHeight) parts.push(`Max Height: ${structures.maxHeight} ft`);
-        if (structures.setbacks) parts.push(`Setbacks: ${structures.setbacks} ft`);
-        if (structures.maxSize) parts.push(`Max Size: ${structures.maxSize.toLocaleString()} sq ft`);
-        if (structures.allowedTypes) parts.push(`Allowed Types: ${structures.allowedTypes.join(', ')}`);
+        if (structures.minSetbacks) parts.push(`Min Setbacks: ${structures.minSetbacks} ft`);
+        if (structures.minSeparation) parts.push(`Min Separation: ${structures.minSeparation} ft from main dwelling`);
+        if (structures.includedInCoverage !== undefined) {
+            parts.push(`Included in Coverage: ${structures.includedInCoverage ? 'Yes' : 'No'}`);
+        }
+
         return parts.length > 0 ? parts.join(' | ') : 'Standard accessory structure rules';
     }
 
     formatPoolSpaRequirements(pool) {
         if (!pool) return 'Standard pool/spa requirements';
         const parts = [];
-        if (pool.setbacks) parts.push(`Setbacks: ${pool.setbacks} ft`);
-        if (pool.safetyRequirements) parts.push(`Safety: ${pool.safetyRequirements.join(', ')}`);
-        if (pool.coverageLimit) parts.push(`Coverage Limit: ${pool.coverageLimit}%`);
+
+        if (pool.minSetbacks) parts.push(`Min Setbacks: ${pool.minSetbacks} ft`);
+        if (pool.safetyBarriers) parts.push(`Safety Barriers: ${pool.safetyBarriers}`);
+        if (pool.equipmentScreening) parts.push(`Equipment Screening: ${pool.equipmentScreening}`);
+
         return parts.length > 0 ? parts.join(' | ') : 'Standard pool/spa requirements';
     }
 
     formatCoverageRequirements(coverage) {
         if (!coverage) return 'Standard coverage requirements';
         const parts = [];
-        if (coverage.maxCoverage) parts.push(`Max Coverage: ${coverage.maxCoverage}%`);
-        if (coverage.currentCoverage) parts.push(`Current: ${coverage.currentCoverage}%`);
-        if (coverage.landscapeRequired) parts.push(`Landscape Required: ${coverage.landscapeRequired}%`);
+
+        if (coverage.maxCoveragePercent) parts.push(`Base Coverage: ${coverage.maxCoveragePercent}%`);
+        if (coverage.additionalAllowancePercent) parts.push(`Additional Allowance: ${coverage.additionalAllowancePercent}%`);
+        if (coverage.maxCoverageArea) parts.push(`Base Coverage Area: ${coverage.maxCoverageArea.toLocaleString()} sq ft`);
+        if (coverage.additionalAllowanceArea) parts.push(`Additional Area: ${coverage.additionalAllowanceArea.toLocaleString()} sq ft`);
+        if (coverage.totalMaxCoverage) parts.push(`Total Max Coverage: ${coverage.totalMaxCoverage.toLocaleString()} sq ft`);
+
         return parts.length > 0 ? parts.join(' | ') : 'Standard coverage requirements';
     }
 
