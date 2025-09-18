@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palo Alto Housing Planning & Validation</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Override to ensure mode switching works */
+        .mode-content {
+            display: none !important;
+        }
+        .mode-content.active {
+            display: block !important;
+        }
+        .mode-btn {
+            cursor: pointer;
+        }
+        .mode-btn.active {
+            background: #007AFF !important;
+            color: white !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Navigation Header -->
+        <nav class="nav-header glass-surface">
+            <div class="nav-content">
+                <div class="nav-brand">
+                    <div class="brand-icon">🏡</div>
+                    <h1 class="brand-title">Palo Alto Planning</h1>
+                </div>
+
+                <div class="nav-controls">
+                    <div class="mode-switcher glass-surface">
+                        <button class="mode-btn active" data-mode="planning" onclick="switchModeSimple('planning')">
+                            <span class="mode-icon">📋</span>
+                            <span class="mode-text">Planning</span>
+                        </button>
+                        <button class="mode-btn" data-mode="validation" onclick="switchModeSimple('validation')">
+                            <span class="mode-icon">✅</span>
+                            <span class="mode-text">Validation</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Planning Mode -->
+            <div class="mode-content planning-mode active" id="planningMode">
+                <div class="content-grid">
+                    <div class="input-panel glass-surface">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Planning Workflow</h2>
+                            <div class="panel-subtitle">Start planning your development project</div>
+                        </div>
+                        <p>Planning mode content - This is where the planning form would be.</p>
+                        <p>Tooltips and full functionality should work here.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Validation Mode -->
+            <div class="mode-content validation-mode" id="validationMode">
+                <div class="content-grid">
+                    <div class="input-panel glass-surface">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Design Validation</h2>
+                            <div class="panel-subtitle">Submit design details for compliance checking</div>
+                        </div>
+                        <p>Validation mode content - This is where the validation form would be.</p>
+                        <p>Full validation workflow would be available here.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        console.log('Simple mode switching script loaded');
+
+        function switchModeSimple(mode) {
+            console.log('Switching to mode:', mode);
+
+            // Update buttons
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.mode === mode) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Update content
+            document.querySelectorAll('.mode-content').forEach(content => {
+                content.classList.remove('active');
+                if (content.id === mode + 'Mode') {
+                    content.classList.add('active');
+                }
+            });
+
+            console.log('Mode switch completed');
+        }
+
+        // Ensure planning mode is active on load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded - setting up initial state');
+            switchModeSimple('planning');
+        });
+    </script>
+</body>
+</html>

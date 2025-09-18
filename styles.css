@@ -261,11 +261,21 @@ body {
 
 /* Mode content */
 .mode-content {
-  display: none;
+  display: none !important;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .mode-content.active {
-  display: block;
+  display: block !important;
+  opacity: 1;
+}
+
+/* Force visibility for active content */
+.mode-content.active {
+  visibility: visible;
+  height: auto;
+  overflow: visible;
 }
 
 /* Content grid */

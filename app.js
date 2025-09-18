@@ -21,10 +21,14 @@ class PlanningValidationApp {
     }
 
     setupEventListeners() {
-        // Mode switching
+        // Mode switching - more robust event handling
         document.querySelectorAll('.mode-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                this.switchMode(e.target.dataset.mode);
+                e.preventDefault();
+                e.stopPropagation();
+                const mode = e.target.closest('.mode-btn').dataset.mode;
+                console.log('Mode button clicked:', mode);
+                this.switchMode(mode);
             });
         });
 
@@ -126,41 +130,68 @@ class PlanningValidationApp {
     }
 
     setupModeToggle() {
+        console.log('Setting up mode toggle, current mode:', this.currentMode);
+
+        // Ensure initial state is set correctly
+        this.switchMode(this.currentMode);
+
+        // Add some debugging
         const planningMode = document.getElementById('planningMode');
         const validationMode = document.getElementById('validationMode');
 
-        if (this.currentMode === 'planning') {
-            planningMode.classList.add('active');
-            validationMode.classList.remove('active');
-        } else {
-            planningMode.classList.remove('active');
-            validationMode.classList.add('active');
-        }
+        console.log('Planning mode element:', planningMode ? 'found' : 'not found');
+        console.log('Validation mode element:', validationMode ? 'found' : 'not found');
     }
 
     switchMode(mode) {
         console.log('switchMode called with mode:', mode);
         console.log('current mode:', this.currentMode);
 
-        if (this.currentMode === mode) return;
+        if (!mode) {
+            console.error('No mode provided to switchMode');
+            return;
+        }
 
+        // Force update even if same mode to fix display issues
         this.currentMode = mode;
 
-        // Update mode buttons
+        // Update mode buttons - more explicit approach
         document.querySelectorAll('.mode-btn').forEach(btn => {
-            console.log('Button:', btn.dataset.mode, 'active:', btn.dataset.mode === mode);
-            btn.classList.toggle('active', btn.dataset.mode === mode);
+            btn.classList.remove('active');
+            if (btn.dataset.mode === mode) {
+                btn.classList.add('active');
+            }
         });
 
-        // Update mode content
+        // Update mode content - more explicit approach
         document.querySelectorAll('.mode-content').forEach(content => {
-            const shouldBeActive = content.id === `${mode}Mode`;
-            console.log('Content:', content.id, 'should be active:', shouldBeActive);
-            content.classList.toggle('active', shouldBeActive);
+            content.classList.remove('active');
+            content.style.display = 'none';
         });
+
+        // Show the selected mode content
+        const targetContent = document.getElementById(`${mode}Mode`);
+        if (targetContent) {
+            targetContent.classList.add('active');
+            targetContent.style.display = 'block';
+            console.log('Activated content:', targetContent.id);
+        } else {
+            console.error('Could not find content element for mode:', mode);
+        }
 
         // Reset any ongoing workflows
         this.resetWorkflow();
+
+        // Force a repaint
+        setTimeout(() => {
+            const activeContent = document.querySelector('.mode-content.active');
+            if (activeContent) {
+                activeContent.style.opacity = '0';
+                setTimeout(() => {
+                    activeContent.style.opacity = '1';
+                }, 10);
+            }
+        }, 10);
     }
 
     resetWorkflow() {
@@ -1267,7 +1298,16 @@ class PlanningValidationApp {
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing app...');
     window.app = new PlanningValidationApp();
+
+    // Force initial mode display after short delay
+    setTimeout(() => {
+        console.log('Forcing initial mode display...');
+        if (window.app) {
+            window.app.switchMode('planning'); // Force planning mode initially
+        }
+    }, 100);
 });
 
 // Export for potential external use
