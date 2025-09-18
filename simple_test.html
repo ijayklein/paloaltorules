@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Mode Switch Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .mode-btn { padding: 10px 20px; margin: 5px; cursor: pointer; border: 1px solid #ccc; background: #f9f9f9; }
+        .mode-btn.active { background: #007AFF; color: white; }
+        .mode-content { display: none; padding: 20px; margin: 10px 0; border: 1px solid #ddd; }
+        .mode-content.active { display: block; }
+    </style>
+</head>
+<body>
+    <h1>Mode Switch Test</h1>
+
+    <div>
+        <button class="mode-btn active" data-mode="planning">Planning</button>
+        <button class="mode-btn" data-mode="validation">Validation</button>
+    </div>
+
+    <div class="mode-content active" id="planningMode">
+        <h2>Planning Mode</h2>
+        <p>Planning interface would be here.</p>
+    </div>
+
+    <div class="mode-content" id="validationMode">
+        <h2>Validation Mode</h2>
+        <p>Validation interface would be here.</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded');
+
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    const mode = e.target.dataset.mode;
+                    console.log('Switching to mode:', mode);
+
+                    // Update buttons
+                    document.querySelectorAll('.mode-btn').forEach(b => {
+                        b.classList.remove('active');
+                        if (b.dataset.mode === mode) {
+                            b.classList.add('active');
+                        }
+                    });
+
+                    // Update content
+                    document.querySelectorAll('.mode-content').forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === mode + 'Mode') {
+                            content.classList.add('active');
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>

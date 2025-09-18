@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palo Alto Housing Planning & Validation</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Navigation Header -->
+        <nav class="nav-header glass-surface">
+            <div class="nav-content">
+                <div class="nav-brand">
+                    <div class="brand-icon">🏡</div>
+                    <h1 class="brand-title">Palo Alto Planning</h1>
+                </div>
+
+                <div class="nav-controls">
+                    <div class="mode-switcher glass-surface">
+                        <button class="mode-btn active" data-mode="planning" data-tooltip="Create new development plans with step-by-step guidance through all zoning requirements">
+                            <span class="mode-icon">📋</span>
+                            <span class="mode-text">Planning</span>
+                        </button>
+                        <button class="mode-btn" data-mode="validation" data-tooltip="Validate existing designs against Palo Alto zoning regulations with detailed compliance checking">
+                            <span class="mode-icon">✅</span>
+                            <span class="mode-text">Validation</span>
+                        </button>
+                    </div>
+
+                    <button class="template-btn glass-surface" id="templatesBtn" data-tooltip="Save and load project templates for quick setup of similar properties">
+                        <span class="btn-icon">📁</span>
+                        <span class="btn-text">Templates</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Planning Mode -->
+            <div class="mode-content planning-mode active" id="planningMode">
+                <div class="content-grid">
+                    <!-- Input Panel -->
+                    <div class="input-panel glass-surface">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Site Information</h2>
+                            <div class="panel-subtitle">Enter property details to begin planning</div>
+                        </div>
+
+                        <form class="input-form" id="planningForm">
+                            <!-- Basic Site Information -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <h3 class="section-title">Property Details</h3>
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">Property Address
+                                            <span class="tooltip-trigger" data-tooltip="Complete street address of the property including city and state. This will be used in all generated reports and documentation.">ℹ️</span>
+                                        </label>
+                                        <input type="text" class="form-input glass-input" name="address" placeholder="123 Main Street, Palo Alto, CA" required data-tooltip="Enter the full property address as it appears on official documents">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">APN (Assessor's Parcel Number)
+                                            <span class="tooltip-trigger" data-tooltip="The unique identifier assigned by the county assessor to this property. Used for tax and legal identification. Optional but recommended for accurate record keeping.">ℹ️</span>
+                                        </label>
+                                        <input type="text" class="form-input glass-input" name="apn" placeholder="123-45-678" data-tooltip="Format: XXX-XX-XXX. Find this on your property tax statement or county records">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Zone District
+                                            <span class="tooltip-trigger" data-tooltip="The zoning designation determines all applicable regulations including lot size, height limits, setbacks, and floor area calculations. This is found on the city's zoning map or property records.">ℹ️</span>
+                                        </label>
+                                        <select class="form-select glass-input" name="zone" required data-tooltip="Select the correct zoning district for this property. Each zone has different minimum lot sizes and development standards.">
+                                            <option value="">Select Zone</option>
+                                            <option value="R-1">R-1 (6,000 sf minimum lot)</option>
+                                            <option value="R-1(7000)">R-1(7000) (7,000 sf minimum lot)</option>
+                                            <option value="R-1(8000)">R-1(8000) (8,000 sf minimum lot)</option>
+                                            <option value="R-1(10000)">R-1(10000) (10,000 sf minimum lot)</option>
+                                            <option value="R-1(20000)">R-1(20000) (20,000 sf minimum lot)</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Lot Size (sq ft)
+                                            <span class="tooltip-trigger" data-tooltip="Total area of the property in square feet as shown on the survey or title report. This is the gross lot area before any exclusions for creeks or easements.">ℹ️</span>
+                                        </label>
+                                        <input type="number" class="form-input glass-input" name="lotSize" placeholder="8000" min="1000" required data-tooltip="Enter the total lot area in square feet. Must be at least 1,000 sf and should match zone minimum requirements.">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Lot Characteristics -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <h3 class="section-title">Lot Characteristics</h3>
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">Lot Type
+                                            <span class="tooltip-trigger" data-tooltip="Flag lots have different substandard thresholds and may have special access requirements. A flag lot typically has a narrow access strip to a wider developable area.">ℹ️</span>
+                                        </label>
+                                        <select class="form-select glass-input" name="lotType" data-tooltip="Typical: standard rectangular lot. Flag: lot with narrow access strip leading to wider buildable area.">
+                                            <option value="typical">Typical Lot</option>
+                                            <option value="flag">Flag Lot</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group checkbox-group">
+                                        <label class="checkbox-label" data-tooltip="Corner lots have frontage on two streets and require additional street-side setbacks. They may have special garage placement requirements.">
+                                            <input type="checkbox" class="form-checkbox" name="isCornerLot">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="checkbox-text">Corner Lot
+                                                <span class="tooltip-trigger" data-tooltip="Check if the property has frontage on two or more streets. This affects setback requirements and garage placement rules.">ℹ️</span>
+                                            </span>
+                                        </label>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Creek Areas (sq ft)
+                                            <span class="tooltip-trigger" data-tooltip="Area of the lot that contains creek channels or creek setback areas. These areas are typically excluded from lot area calculations and cannot be built upon.">ℹ️</span>
+                                        </label>
+                                        <input type="number" class="form-input glass-input" name="creekAreas" placeholder="0" min="0" data-tooltip="Enter the area of any creek channels or required creek setbacks on the property. Leave blank or 0 if none.">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Easements (sq ft)
+                                            <span class="tooltip-trigger" data-tooltip="Area of utility, access, or other easements that may restrict development. Public easements are typically excluded from buildable area calculations.">ℹ️</span>
+                                        </label>
+                                        <input type="number" class="form-input glass-input" name="easements" placeholder="0" min="0" data-tooltip="Total area of easements that restrict building. Include utility, access, and drainage easements.">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Special Conditions -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <h3 class="section-title">Special Conditions</h3>
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">Historic Designation
+                                            <span class="tooltip-trigger" data-tooltip="Historic properties have special design restrictions and review requirements. Category 1 has the strictest requirements, Category 2 has modified requirements.">ℹ️</span>
+                                        </label>
+                                        <select class="form-select glass-input" name="historicCategory" data-tooltip="Select if the property has a historic designation. Historic properties require special design review and may have exemptions or restrictions.">
+                                            <option value="">None</option>
+                                            <option value="Category_1">Category 1 (Primary Importance - Strictest Requirements)</option>
+                                            <option value="Category_2">Category 2 (Secondary Importance - Modified Requirements)</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group checkbox-group">
+                                        <label class="checkbox-label" data-tooltip="Second dwelling units (ADUs) have minimum lot size requirements and require additional parking. The system will check if your lot qualifies.">
+                                            <input type="checkbox" class="form-checkbox" name="hasSecondUnit">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="checkbox-text">Planning Second Dwelling Unit
+                                                <span class="tooltip-trigger" data-tooltip="Also known as Accessory Dwelling Unit (ADU). Requires larger lot sizes and additional parking spaces. Size limited to 640 sf or 50% of main house.">ℹ️</span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="form-actions">
+                                <button type="button" class="btn-secondary glass-surface" id="loadTemplateBtn" data-tooltip="Load a previously saved template to quickly fill out the form">
+                                    <span class="btn-icon">📂</span>
+                                    <span class="btn-text">Load Template</span>
+                                </button>
+                                <button type="button" class="btn-secondary glass-surface" id="saveTemplateBtn" data-tooltip="Save the current form data as a template for future use">
+                                    <span class="btn-icon">💾</span>
+                                    <span class="btn-text">Save Template</span>
+                                </button>
+                                <button type="submit" class="btn-primary glass-surface" data-tooltip="Begin the 5-phase planning workflow to generate design parameters and compliance guidance">
+                                    <span class="btn-icon">🚀</span>
+                                    <span class="btn-text">Start Planning</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Results Panel -->
+                    <div class="results-panel glass-surface">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Planning Results</h2>
+                            <div class="panel-subtitle">Phase-by-phase design guidance</div>
+                            <div class="panel-controls">
+                                <button class="btn-secondary glass-surface" id="generatePlanningReport" style="display: none;" data-tooltip="Generate and download a comprehensive planning report with all recommendations and design parameters">
+                                    <span class="btn-icon">📄</span>
+                                    <span class="btn-text">Generate Report</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="results-content" id="planningResults">
+                            <div class="empty-state">
+                                <div class="empty-icon">📋</div>
+                                <h3 class="empty-title">Ready for Planning</h3>
+                                <p class="empty-text">Enter site information and click "Start Planning" to begin the 5-phase design workflow.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Indicator -->
+                <div class="progress-container glass-surface" id="planningProgress" style="display: none;">
+                    <div class="progress-header">
+                        <h3 class="progress-title">Planning Progress</h3>
+                        <div class="progress-phase" id="currentPhase">Phase 1 of 5</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-phases">
+                        <div class="phase-indicator" data-phase="1" data-tooltip="Verify lot compliance, identify constraints, and establish baseline parameters">
+                            <div class="phase-dot"></div>
+                            <div class="phase-label">Site Analysis</div>
+                        </div>
+                        <div class="phase-indicator" data-phase="2" data-tooltip="Calculate building envelope, height limits, setbacks, and floor area allowances">
+                            <div class="phase-dot"></div>
+                            <div class="phase-label">Building Design</div>
+                        </div>
+                        <div class="phase-indicator" data-phase="3" data-tooltip="Determine parking requirements, driveway specifications, and access design">
+                            <div class="phase-dot"></div>
+                            <div class="phase-label">Parking & Access</div>
+                        </div>
+                        <div class="phase-indicator" data-phase="4" data-tooltip="Plan second units, accessory structures, pools, and landscape features">
+                            <div class="phase-dot"></div>
+                            <div class="phase-label">Special Features</div>
+                        </div>
+                        <div class="phase-indicator" data-phase="5" data-tooltip="Final compliance review, documentation requirements, and submission preparation">
+                            <div class="phase-dot"></div>
+                            <div class="phase-label">Final Compliance</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Validation Mode -->
+            <div class="mode-content validation-mode" id="validationMode">
+                <div class="content-grid">
+                    <!-- Input Panel -->
+                    <div class="input-panel glass-surface">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Design Validation</h2>
+                            <div class="panel-subtitle">Submit design details for compliance checking</div>
+                        </div>
+
+                        <form class="input-form" id="validationForm">
+                            <!-- Site Data -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <h3 class="section-title">Site Data</h3>
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">Property Address
+                                            <span class="tooltip-trigger" data-tooltip="Complete street address of the property. Must match the actual property being validated.">ℹ️</span>
+                                        </label>
+                                        <input type="text" class="form-input glass-input" name="address" placeholder="123 Main Street, Palo Alto, CA" required data-tooltip="Enter the full property address for the design being validated">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Zone District
+                                            <span class="tooltip-trigger" data-tooltip="The actual zoning district of the property. This must be accurate as it determines all validation criteria.">ℹ️</span>
+                                        </label>
+                                        <select class="form-select glass-input" name="zone" required data-tooltip="Select the correct zoning district for validation. Incorrect zone selection will result in wrong validation results.">
+                                            <option value="">Select Zone</option>
+                                            <option value="R-1">R-1 (6,000 sf minimum lot)</option>
+                                            <option value="R-1(7000)">R-1(7000) (7,000 sf minimum lot)</option>
+                                            <option value="R-1(8000)">R-1(8000) (8,000 sf minimum lot)</option>
+                                            <option value="R-1(10000)">R-1(10000) (10,000 sf minimum lot)</option>
+                                            <option value="R-1(20000)">R-1(20000) (20,000 sf minimum lot)</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Lot Size (sq ft)
+                                            <span class="tooltip-trigger" data-tooltip="Actual surveyed lot area. This is used to validate zone compliance and calculate allowable development.">ℹ️</span>
+                                        </label>
+                                        <input type="number" class="form-input glass-input" name="lotSize" placeholder="8000" min="1000" required data-tooltip="Enter the exact lot area from the survey. This determines zone compliance and development allowances.">
+                                    </div>
+
+                                    <div class="form-group checkbox-group">
+                                        <label class="checkbox-label" data-tooltip="Corner lot status affects setback requirements, especially for garages and street-side yards.">
+                                            <input type="checkbox" class="form-checkbox" name="isCornerLot">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="checkbox-text">Corner Lot
+                                                <span class="tooltip-trigger" data-tooltip="Check if the property has street frontage on two or more sides. This affects validation criteria.">ℹ️</span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Building Design Data -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <h3 class="section-title">Building Design</h3>
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">Building Height (ft)
+                                            <span class="tooltip-trigger" data-tooltip="Maximum height of the building measured from average grade to highest point. Critical for compliance - standard lots: 30 ft max, substandard lots: 17 ft max.">ℹ️</span>
+                                        </label>
+                                        <input type="number" class="form-input glass-input" name="buildingHeight" placeholder="25" min="1" step="0.1" required data-tooltip="Enter the actual building height in feet. This is one of the most critical compliance checks.">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Total Floor Area (sq ft)
+                                            <span class="tooltip-trigger" data-tooltip="Total gross floor area of all floors in the main building. Used to validate Floor Area Ratio (FAR) compliance.">ℹ️</span>
+                                        </label>
+                                        <input type="number" class="form-input glass-input" name="totalFloorArea" placeholder="3500" min="1" required data-tooltip="Enter the total floor area of the building. This will be checked against calculated FAR limits.">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Number of Floors
+                                            <span class="tooltip-trigger" data-tooltip="Number of floors affects story height equivalency calculations and height compliance.">ℹ️</span>
+                                        </label>
+                                        <select class="form-select glass-input" name="floors" data-tooltip="Select the actual number of floors in the building for proper validation.">
+                                            <option value="1">1 Floor</option>
+                                            <option value="2">2 Floors</option>
+                                            <option value="3">3 Floors</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Total Coverage (sq ft)
+                                            <span class="tooltip-trigger" data-tooltip="Total area covered by all structures including main building, garage, and accessory structures. Used for lot coverage validation (35% max + 5% allowances).">ℹ️</span>
+                                        </label>
+                                        <input type="number" class="form-input glass-input" name="totalCoverage" placeholder="2800" min="1" required data-tooltip="Enter the total area covered by all buildings and structures on the property.">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Setbacks -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <h3 class="section-title">Setbacks</h3>
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">Front Setback (ft)
+                                            <span class="tooltip-trigger" data-tooltip="Distance from front property line to closest point of building. Minimum required: 20 feet for most R-1 lots.">ℹ️</span>
+                                        </label>
+                                        <input type="number" class="form-input glass-input" name="frontSetback" placeholder="20" min="0" step="0.1" required data-tooltip="Enter the actual distance from the front property line to the building.">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Interior Side Setback (ft)
+                                            <span class="tooltip-trigger" data-tooltip="Distance from side property line (not street side) to building. Minimum required: 5 feet.">ℹ️</span>
+                                        </label>
+                                        <input type="number" class="form-input glass-input" name="interiorSideSetback" placeholder="5" min="0" step="0.1" required data-tooltip="Enter the actual distance from the interior side property line to the building.">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Street Side Setback (ft)
+                                            <span class="tooltip-trigger" data-tooltip="Distance from street-side property line to building on corner lots. Minimum required: 16 feet. Leave blank if not a corner lot.">ℹ️</span>
+                                        </label>
+                                        <input type="number" class="form-input glass-input" name="streetSideSetback" placeholder="16" min="0" step="0.1" data-tooltip="Enter the distance from the street-side property line to the building (corner lots only).">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Rear Setback (ft)
+                                            <span class="tooltip-trigger" data-tooltip="Distance from rear property line to closest point of building. Minimum required: 20 feet.">ℹ️</span>
+                                        </label>
+                                        <input type="number" class="form-input glass-input" name="rearSetback" placeholder="20" min="0" step="0.1" required data-tooltip="Enter the actual distance from the rear property line to the building.">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Parking -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <h3 class="section-title">Parking & Access</h3>
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">Total Parking Spaces
+                                            <span class="tooltip-trigger" data-tooltip="Total number of parking spaces provided. Required: 2 spaces for main dwelling + 2 additional for second dwelling unit if applicable.">ℹ️</span>
+                                        </label>
+                                        <input type="number" class="form-input glass-input" name="parkingSpaces" placeholder="2" min="0" required data-tooltip="Enter the total number of parking spaces provided on the property.">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Covered Parking Spaces
+                                            <span class="tooltip-trigger" data-tooltip="Number of covered parking spaces (garage or carport). Required: 1 covered space per dwelling unit.">ℹ️</span>
+                                        </label>
+                                        <input type="number" class="form-input glass-input" name="coveredParkingSpaces" placeholder="1" min="0" required data-tooltip="Enter the number of covered parking spaces (garage, carport, or other covered structure).">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Driveway Surface Width (ft)
+                                            <span class="tooltip-trigger" data-tooltip="Width of the driveway surface. Minimum required: 8 feet for surface width, 10 feet for clearance width.">ℹ️</span>
+                                        </label>
+                                        <input type="number" class="form-input glass-input" name="drivewaySurfaceWidth" placeholder="8" min="0" step="0.1" data-tooltip="Enter the actual width of the driveway paved surface.">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Backing Distance (ft)
+                                            <span class="tooltip-trigger" data-tooltip="Distance available for backing out of parking spaces before reaching sidewalk or street. Minimum required: 18 feet.">ℹ️</span>
+                                        </label>
+                                        <input type="number" class="form-input glass-input" name="backingDistance" placeholder="18" min="0" step="0.1" data-tooltip="Enter the distance from parking spaces to sidewalk or street for backing maneuvers.">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Special Features -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <h3 class="section-title">Special Features</h3>
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group checkbox-group">
+                                        <label class="checkbox-label" data-tooltip="Second dwelling units require larger lot sizes, additional parking, and size limitations. They also require special validation.">
+                                            <input type="checkbox" class="form-checkbox" name="hasSecondUnit">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="checkbox-text">Has Second Dwelling Unit
+                                                <span class="tooltip-trigger" data-tooltip="Check if the design includes an ADU. This triggers additional validation for lot size, parking, and unit size.">ℹ️</span>
+                                            </span>
+                                        </label>
+                                    </div>
+
+                                    <div class="form-group checkbox-group">
+                                        <label class="checkbox-label" data-tooltip="Pools and spas have setback requirements and safety barrier regulations that will be validated.">
+                                            <input type="checkbox" class="form-checkbox" name="hasPool">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="checkbox-text">Has Pool/Spa
+                                                <span class="tooltip-trigger" data-tooltip="Check if the design includes a pool or spa. This triggers validation of setbacks and safety requirements.">ℹ️</span>
+                                            </span>
+                                        </label>
+                                    </div>
+
+                                    <div class="form-group checkbox-group">
+                                        <label class="checkbox-label" data-tooltip="Garages have specific placement requirements, especially on corner lots, and affect covered parking calculations.">
+                                            <input type="checkbox" class="form-checkbox" name="hasGarage">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="checkbox-text">Has Garage
+                                                <span class="tooltip-trigger" data-tooltip="Check if the design includes a garage. This triggers validation of garage placement and setback requirements.">ℹ️</span>
+                                            </span>
+                                        </label>
+                                    </div>
+
+                                    <div class="form-group checkbox-group">
+                                        <label class="checkbox-label" data-tooltip="Daylight plane compliance ensures building mass doesn't violate the 45-degree envelope from property lines. Check this if your design complies.">
+                                            <input type="checkbox" class="form-checkbox" name="daylightPlaneCompliant">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="checkbox-text">Daylight Plane Compliant
+                                                <span class="tooltip-trigger" data-tooltip="Check if the building envelope stays within the 45-degree daylight plane from all property lines at 10 feet height.">ℹ️</span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="form-actions">
+                                <button type="button" class="btn-secondary glass-surface" id="loadValidationTemplateBtn" data-tooltip="Load a previously saved validation template">
+                                    <span class="btn-icon">📂</span>
+                                    <span class="btn-text">Load Template</span>
+                                </button>
+                                <button type="button" class="btn-secondary glass-surface" id="saveValidationTemplateBtn" data-tooltip="Save the current validation data as a template">
+                                    <span class="btn-icon">💾</span>
+                                    <span class="btn-text">Save Template</span>
+                                </button>
+                                <button type="submit" class="btn-primary glass-surface" data-tooltip="Begin comprehensive validation of the design against all zoning requirements">
+                                    <span class="btn-icon">🔍</span>
+                                    <span class="btn-text">Validate Design</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Results Panel -->
+                    <div class="results-panel glass-surface">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Validation Results</h2>
+                            <div class="panel-subtitle">Compliance check results</div>
+                            <div class="panel-controls">
+                                <button class="btn-secondary glass-surface" id="generateValidationReport" style="display: none;" data-tooltip="Generate and download a detailed validation report with all pass/fail results and remediation guidance">
+                                    <span class="btn-icon">📄</span>
+                                    <span class="btn-text">Generate Report</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="results-content" id="validationResults">
+                            <div class="empty-state">
+                                <div class="empty-icon">✅</div>
+                                <h3 class="empty-title">Ready for Validation</h3>
+                                <p class="empty-text">Enter design information and click "Validate Design" to check compliance with zoning requirements.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Indicator -->
+                <div class="progress-container glass-surface" id="validationProgress" style="display: none;">
+                    <div class="progress-header">
+                        <h3 class="progress-title">Validation Progress</h3>
+                        <div class="progress-phase" id="validationCurrentPhase">Phase 1 of 5</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="validationProgressFill"></div>
+                    </div>
+                    <div class="progress-phases">
+                        <div class="phase-indicator" data-phase="1" data-tooltip="Validate site data, lot size, zone compliance, and environmental constraints">
+                            <div class="phase-dot"></div>
+                            <div class="phase-label">Site Analysis</div>
+                        </div>
+                        <div class="phase-indicator" data-phase="2" data-tooltip="Check building height, setbacks, floor area ratio, and daylight plane compliance">
+                            <div class="phase-dot"></div>
+                            <div class="phase-label">Building Envelope</div>
+                        </div>
+                        <div class="phase-indicator" data-phase="3" data-tooltip="Validate parking counts, driveway dimensions, garage placement, and access requirements">
+                            <div class="phase-dot"></div>
+                            <div class="phase-label">Parking & Access</div>
+                        </div>
+                        <div class="phase-indicator" data-phase="4" data-tooltip="Check second unit compliance, accessory structures, pools, and total lot coverage">
+                            <div class="phase-dot"></div>
+                            <div class="phase-label">Special Features</div>
+                        </div>
+                        <div class="phase-indicator" data-phase="5" data-tooltip="Generate comprehensive validation report with final approval status and next steps">
+                            <div class="phase-dot"></div>
+                            <div class="phase-label">Final Report</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Template Modal -->
+        <div class="modal-backdrop" id="templateModal" style="display: none;">
+            <div class="modal glass-surface">
+                <div class="modal-header">
+                    <h3 class="modal-title">Template Management</h3>
+                    <button class="modal-close glass-surface" id="closeTemplateModal">×</button>
+                </div>
+
+                <div class="modal-content">
+                    <div class="template-tabs">
+                        <button class="tab-btn active" data-tab="load" data-tooltip="Load a previously saved template to quickly fill out the form">Load Template</button>
+                        <button class="tab-btn" data-tab="save" data-tooltip="Save the current form data as a template for future use">Save Template</button>
+                    </div>
+
+                    <div class="tab-content active" data-tab="load">
+                        <div class="template-list" id="templateList">
+                            <!-- Templates will be loaded here -->
+                        </div>
+                    </div>
+
+                    <div class="tab-content" data-tab="save">
+                        <div class="save-template-form">
+                            <div class="form-group">
+                                <label class="form-label">Template Name
+                                    <span class="tooltip-trigger" data-tooltip="Give your template a descriptive name to easily identify it later">ℹ️</span>
+                                </label>
+                                <input type="text" class="form-input glass-input" id="templateName" placeholder="My Template" data-tooltip="Enter a memorable name for this template">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Description
+                                    <span class="tooltip-trigger" data-tooltip="Optional description to help you remember what this template is for">ℹ️</span>
+                                </label>
+                                <textarea class="form-textarea glass-input" id="templateDescription" placeholder="Template description..." data-tooltip="Optional: describe what type of project this template is designed for"></textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn-primary glass-surface" id="saveNewTemplate" data-tooltip="Save the current form values as a new template">Save Template</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tooltip -->
+        <div class="tooltip glass-surface" id="tooltip" style="display: none;">
+            <div class="tooltip-content"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        console.log('Starting to load scripts...');
+    </script>
+    <script src="planning_engine.js" onerror="console.error('Failed to load planning_engine.js')"></script>
+    <script src="validation_engine.js" onerror="console.error('Failed to load validation_engine.js')"></script>
+    <script src="app.js" onerror="console.error('Failed to load app.js')"></script>
+    <script>
+        console.log('All scripts loaded');
+        window.addEventListener('error', function(e) {
+            console.error('Global error:', e.error);
+        });
+    </script>
+</body>
+</html>

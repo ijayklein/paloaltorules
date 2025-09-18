@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mode Switch Debug</title>
+    <style>
+        .mode-content {
+            display: none;
+            padding: 20px;
+            border: 2px solid #ccc;
+            margin: 10px 0;
+        }
+        .mode-content.active {
+            display: block;
+        }
+        .mode-btn {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .mode-btn.active {
+            background-color: #007AFF;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mode Switch Test</h1>
+
+    <button class="mode-btn active" data-mode="planning">Planning Mode</button>
+    <button class="mode-btn" data-mode="validation">Validation Mode</button>
+
+    <div class="mode-content active" id="planningMode">
+        <h2>Planning Mode Content</h2>
+        <p>This is the planning mode interface.</p>
+    </div>
+
+    <div class="mode-content" id="validationMode">
+        <h2>Validation Mode Content</h2>
+        <p>This is the validation mode interface.</p>
+    </div>
+
+    <script>
+        console.log('Script loaded');
+
+        // Simple mode switching
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                console.log('Button clicked:', e.target.dataset.mode);
+
+                const mode = e.target.dataset.mode;
+
+                // Update buttons
+                document.querySelectorAll('.mode-btn').forEach(b => {
+                    b.classList.toggle('active', b.dataset.mode === mode);
+                });
+
+                // Update content
+                document.querySelectorAll('.mode-content').forEach(content => {
+                    content.classList.toggle('active', content.id === `${mode}Mode`);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
