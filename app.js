@@ -1097,13 +1097,30 @@ class PlanningValidationApp {
         reportContent += `The following report provides comprehensive planning guidance through all five phases.\n\n`;
 
         workflow.results.forEach((phase, index) => {
-            reportContent += `## Phase ${index + 1}: ${phase.phase}\n\n`;
+            reportContent += `## Phase ${index + 1}: ${phase.phaseName || phase.phase}\n\n`;
+
+            // Add task details
+            if (phase.tasks && phase.tasks.length > 0) {
+                reportContent += `### Tasks Completed:\n`;
+                phase.tasks.forEach(task => {
+                    reportContent += `• **${task.name}:** ${task.status}\n`;
+                    if (task.recommendations && task.recommendations.length > 0) {
+                        task.recommendations.forEach(rec => {
+                            reportContent += `  - ${rec}\n`;
+                        });
+                    }
+                });
+                reportContent += `\n`;
+            }
 
             if (phase.recommendations && phase.recommendations.length > 0) {
-                reportContent += `### Recommendations:\n`;
+                reportContent += `### Phase Recommendations:\n`;
                 phase.recommendations.forEach(rec => {
                     const icon = this.getRecommendationIcon(rec.type);
                     reportContent += `${icon} **${rec.type.toUpperCase()}:** ${rec.message}\n`;
+                    if (rec.action) {
+                        reportContent += `  Action: ${rec.action}\n`;
+                    }
                 });
                 reportContent += `\n`;
             }
@@ -1116,9 +1133,42 @@ class PlanningValidationApp {
                 reportContent += `\n`;
             }
 
+            // Phase 2: Design Parameters
             if (phase.designParameters) {
                 reportContent += `### Design Parameters:\n`;
                 Object.entries(phase.designParameters).forEach(([key, value]) => {
+                    let formattedValue = this.formatParameterValue(key, value);
+                    reportContent += `• **${this.formatParameterName(key)}:** ${formattedValue}\n`;
+                });
+                reportContent += `\n`;
+            }
+
+            // Phase 3: Parking Parameters
+            if (phase.parkingParameters) {
+                reportContent += `### Parking & Access Parameters:\n`;
+                Object.entries(phase.parkingParameters).forEach(([key, value]) => {
+                    let formattedValue = this.formatParameterValue(key, value);
+                    reportContent += `• **${this.formatParameterName(key)}:** ${formattedValue}\n`;
+                });
+                reportContent += `\n`;
+            }
+
+            // Phase 4: Feature Parameters
+            if (phase.featureParameters) {
+                reportContent += `### Special Features & Accessories:\n`;
+                Object.entries(phase.featureParameters).forEach(([key, value]) => {
+                    if (value && value !== null) {
+                        let formattedValue = this.formatParameterValue(key, value);
+                        reportContent += `• **${this.formatParameterName(key)}:** ${formattedValue}\n`;
+                    }
+                });
+                reportContent += `\n`;
+            }
+
+            // Phase 5: Documentation and Final Report
+            if (phase.documentation) {
+                reportContent += `### Documentation Requirements:\n`;
+                Object.entries(phase.documentation).forEach(([key, value]) => {
                     let formattedValue = this.formatParameterValue(key, value);
                     reportContent += `• **${this.formatParameterName(key)}:** ${formattedValue}\n`;
                 });
@@ -1310,9 +1360,31 @@ class PlanningValidationApp {
             'accessRequirements': 'Access Requirements',
             'secondUnitEligible': 'Second Unit Eligibility',
             'poolAllowed': 'Pool Allowed',
-            'maxLotCoverage': 'Maximum Lot Coverage'
+            'maxLotCoverage': 'Maximum Lot Coverage',
+            // Phase 3 - Parking
+            'required': 'Required Parking',
+            'driveway': 'Driveway Requirements',
+            'garage': 'Garage Requirements',
+            'access': 'Access Requirements',
+            // Phase 4 - Features
+            'secondUnit': 'Second Unit Assessment',
+            'accessoryStructures': 'Accessory Structures',
+            'poolSpa': 'Pool & Spa Requirements',
+            'coverage': 'Lot Coverage Analysis',
+            // Phase 5 - Documentation
+            'drawingRequirements': 'Drawing Requirements',
+            'professionalStamps': 'Professional Stamps Required',
+            'submissionProcess': 'Submission Process',
+            'reviewTimeline': 'Review Timeline'
         };
-        return nameMap[key] || key;
+        return nameMap[key] || this.camelCaseToTitle(key);
+    }
+
+    camelCaseToTitle(str) {
+        return str
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, str => str.toUpperCase())
+            .trim();
     }
 
     formatParameterValue(key, value) {
@@ -1327,12 +1399,27 @@ class PlanningValidationApp {
                 return this.formatFarBreakdown(value);
             } else if (key === 'buildingEnvelope') {
                 return this.formatBuildingEnvelope(value);
-            } else if (key === 'parkingRequirements') {
+            } else if (key === 'parkingRequirements' || key === 'required') {
                 return this.formatParkingRequirements(value);
+            } else if (key === 'driveway') {
+                return this.formatDrivewayRequirements(value);
+            } else if (key === 'garage') {
+                return this.formatGarageRequirements(value);
+            } else if (key === 'access') {
+                return this.formatAccessRequirements(value);
+            } else if (key === 'secondUnit') {
+                return this.formatSecondUnitAssessment(value);
+            } else if (key === 'accessoryStructures') {
+                return this.formatAccessoryStructures(value);
+            } else if (key === 'poolSpa') {
+                return this.formatPoolSpaRequirements(value);
+            } else if (key === 'coverage') {
+                return this.formatCoverageRequirements(value);
             } else {
                 // Generic object formatting
                 return Object.entries(value)
-                    .map(([k, v]) => `${k}: ${v}`)
+                    .filter(([k, v]) => v !== null && v !== undefined)
+                    .map(([k, v]) => `${this.camelCaseToTitle(k)}: ${this.formatSimpleValue(v)}`)
                     .join(', ');
             }
         }
@@ -1431,6 +1518,82 @@ class PlanningValidationApp {
             return JSON.stringify(value, null, 2);
         }
         return value.toString();
+    }
+
+    formatSimpleValue(value) {
+        if (value === null || value === undefined) return 'N/A';
+        if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+        if (typeof value === 'number') return value.toLocaleString();
+        return value.toString();
+    }
+
+    // Phase 3 formatting methods
+    formatDrivewayRequirements(driveway) {
+        if (!driveway) return 'Standard driveway requirements';
+        const parts = [];
+        if (driveway.surfaceWidth) parts.push(`Surface Width: ${driveway.surfaceWidth} ft`);
+        if (driveway.clearanceWidth) parts.push(`Clearance Width: ${driveway.clearanceWidth} ft`);
+        if (driveway.backingDistance) parts.push(`Backing Distance: ${driveway.backingDistance} ft`);
+        return parts.length > 0 ? parts.join(' | ') : 'Standard driveway requirements';
+    }
+
+    formatGarageRequirements(garage) {
+        if (!garage) return 'Standard garage requirements';
+        const parts = [];
+        if (garage.setbackFromStreet) parts.push(`Street Setback: ${garage.setbackFromStreet} ft`);
+        if (garage.minDimensions) parts.push(`Min Dimensions: ${garage.minDimensions}`);
+        if (garage.doorOrientation) parts.push(`Door Orientation: ${garage.doorOrientation}`);
+        return parts.length > 0 ? parts.join(' | ') : 'Standard garage requirements';
+    }
+
+    formatAccessRequirements(access) {
+        if (!access) return 'Standard access requirements';
+        const parts = [];
+        if (access.backingDistance) parts.push(`Backing Distance: ${access.backingDistance} ft`);
+        if (access.turnRadius) parts.push(`Turn Radius: ${access.turnRadius} ft`);
+        if (access.clearanceRequirements) parts.push(`Clearance: ${access.clearanceRequirements}`);
+        return parts.length > 0 ? parts.join(' | ') : 'Standard access requirements';
+    }
+
+    // Phase 4 formatting methods
+    formatSecondUnitAssessment(assessment) {
+        if (!assessment) return 'Second unit not assessed';
+        const parts = [];
+        if (assessment.eligible !== undefined) parts.push(`Eligible: ${assessment.eligible ? 'Yes' : 'No'}`);
+        if (assessment.maxSize) parts.push(`Max Size: ${assessment.maxSize.toLocaleString()} sq ft`);
+        if (assessment.parkingRequired) parts.push(`Additional Parking: ${assessment.parkingRequired ? 'Required' : 'Not required'}`);
+        if (assessment.restrictions && assessment.restrictions.length > 0) {
+            parts.push(`Restrictions: ${assessment.restrictions.join(', ')}`);
+        }
+        return parts.length > 0 ? parts.join(' | ') : 'Assessment pending';
+    }
+
+    formatAccessoryStructures(structures) {
+        if (!structures) return 'Standard accessory structure rules';
+        const parts = [];
+        if (structures.maxHeight) parts.push(`Max Height: ${structures.maxHeight} ft`);
+        if (structures.setbacks) parts.push(`Setbacks: ${structures.setbacks} ft`);
+        if (structures.maxSize) parts.push(`Max Size: ${structures.maxSize.toLocaleString()} sq ft`);
+        if (structures.allowedTypes) parts.push(`Allowed Types: ${structures.allowedTypes.join(', ')}`);
+        return parts.length > 0 ? parts.join(' | ') : 'Standard accessory structure rules';
+    }
+
+    formatPoolSpaRequirements(pool) {
+        if (!pool) return 'Standard pool/spa requirements';
+        const parts = [];
+        if (pool.setbacks) parts.push(`Setbacks: ${pool.setbacks} ft`);
+        if (pool.safetyRequirements) parts.push(`Safety: ${pool.safetyRequirements.join(', ')}`);
+        if (pool.coverageLimit) parts.push(`Coverage Limit: ${pool.coverageLimit}%`);
+        return parts.length > 0 ? parts.join(' | ') : 'Standard pool/spa requirements';
+    }
+
+    formatCoverageRequirements(coverage) {
+        if (!coverage) return 'Standard coverage requirements';
+        const parts = [];
+        if (coverage.maxCoverage) parts.push(`Max Coverage: ${coverage.maxCoverage}%`);
+        if (coverage.currentCoverage) parts.push(`Current: ${coverage.currentCoverage}%`);
+        if (coverage.landscapeRequired) parts.push(`Landscape Required: ${coverage.landscapeRequired}%`);
+        return parts.length > 0 ? parts.join(' | ') : 'Standard coverage requirements';
     }
 
     // Utility methods
